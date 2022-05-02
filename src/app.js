@@ -16,13 +16,34 @@ var cookieParser = require('cookie-parser');
 var client_id = 'a3aa685edb1e44249fec2c5871c69c46'; // Your client id
 var client_secret = '7237be6e49bc4eb4bb10b70cdf9af5a9';
 var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+var stateKey = 'spotify_auth_state';
+
+var app = express();
+app.use(cors())
+   .use(cookieParser());
+
+
+/**
+ * Functions for the Reverse Nardwuar feature
+ */
+app.get('/', function(req, res) {
+  res.sendFile('CollaborationGuess/collaborationGuess.html', {root: __dirname })
+});
+
+
+/**
+ * Functions for Authorization
+ */
+app.get('/authorize', function(req, res) {
+  res.sendFile('Authorization/authorization.html', {root: __dirname })
+});
 
 /**
  * Generates a random string containing numbers and letters
  * @param  {number} length The length of the string
  * @return {string} The generated string
  */
-var generateRandomString = function(length) {
+ var generateRandomString = function(length) {
   var text = '';
   var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -31,14 +52,6 @@ var generateRandomString = function(length) {
   }
   return text;
 };
-
-var stateKey = 'spotify_auth_state';
-
-var app = express();
-
-app.use(express.static(__dirname + '/public'))
-   .use(cors())
-   .use(cookieParser());
 
 app.get('/login', function(req, res) {
 
@@ -144,6 +157,9 @@ app.get('/refresh_token', function(req, res) {
 });
 
 
+/**
+ * Starting the app
+ */
 app.listen(8888, () => {
   console.log('Listening on 8888');
   console.log('Visit: http://localhost:8888/')

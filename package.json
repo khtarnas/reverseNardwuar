@@ -1,6 +1,6 @@
 {
   "author": "Hokua Tarnas",
-  "name": "reverseNardwuar",
+  "name": "reversenardwuar",
   "description": "An application that uses the Spotify API and ideas about graph closures to make guesses about what artists will collaborate in the future.",
   "version": "0.0.2",
   "dependencies": {
