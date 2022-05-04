@@ -9,7 +9,36 @@
   <body>
     <div class="container">
       <div id="login">
-        <h1>Please login to check about future collaborations!</h1>
+        <h1>Welcome to The Reverse Nardwuar application:</h1>
+
+        <p><strong>TL;DR You can guess about the likelihood of a future collaboration by entering two music
+          artists' names and a number that represents the accuracy (and runtime) of the search.</strong></p>
+
+        <p>In this application, I use the idea of the Strong Triadic Closure Property to guess which music
+          artists will next collaborate! I will expand/loosen the property for the sack of this project. I
+          will go n artists deep (where n is an input) to see if there is an “extended tie” (a tie
+          created over a number of edges) and the shallower these ties are will
+          define how “likely” they are to collaborate together.</p>
+
+        <p>By "expand/loosen", I mean taking the STC property (which says if two nodes share a strong tie
+            with another node then those two nodes likely have a connection) and making that work for "ties"
+            that are multiple edges long: so say artist A collaborated (meaning they have a strong tie with)
+            artist B and artist B collaborated with artist C, but artist X also collaborated with artist C
+            in the past. I was thinking I could go further than saying that now artist B and artist X are
+            likely to collaborate, but that also artist A and artist X are likely to collaborate! I give a
+            smaller percentage chance based on the length of edges that this tie is.</p>
+
+        <p>With the parameters to the algorithm being two artists and a number n, the graph would be
+          built with one trees rooted at the first given artist with edges connected to all artists
+          they have collaborated with and this process would continue for a depth
+          of n. If the artist is found within this depth, there will be an alert telling you at what 
+          depth it was found and what this means.</p>
+
+        <p>The current algorithm is very simple. The probability of two artist collaborating is just
+          0.5 to the power of the depth the second artist was found at. E.g. If the artist was found
+          at a depth of 3, then the returned likelihood will be 0.5^3 which equals 0.125 so 12.5%.</p>
+
+        <p><strong>Please login with your spotify accoutn to check about future collaborations!</strong></p>
         <a href="/login" class="btn btn-primary">Log in with Spotify</a>
       </div>
       <div id="loggedin">

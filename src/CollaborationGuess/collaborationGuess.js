@@ -16,6 +16,7 @@ let getArtistInformation = async function(name, access_token) {
       'Authorization': 'Bearer ' + access_token,
     },
   });
+  console.log(query);
   const results = await query.json();
 
   // Return information of most matching artist

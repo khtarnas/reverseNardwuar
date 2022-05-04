@@ -15,6 +15,7 @@ const __dirname = dirname(__filename);
 // Import functions from other files
 import { getArtistInformation, getArtistSongs, getCollaborators } from './CollaborationGuess/collaborationGuess.js';
 import { access } from 'fs';
+import { strictEqual } from 'assert';
 
 // Set important spotify api accoutn information
 let client_id = 'a3aa685edb1e44249fec2c5871c69c46'; // Your client id
@@ -46,10 +47,28 @@ const isPostiveInteger = function (str) {
   const val = Number(str);
 
   // check if integer and positive
-  if (Number.isInteger(val) && val >= 0) {
+  if (Number.isInteger(val) && val > 0) {
     return true;
   }
   return false;
+}
+
+const replaceNonEnglishCharacters = function (str) {
+  let allAcceptable = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '
+
+  // Check that every character is in the set of acceptable characters
+  for (let i = str.length - 1; i >= 0; i--) {
+    if (!allAcceptable.includes(str[i])) {
+
+      // remove the character if it is not acceptable
+      str = str.replace(str[i], '');
+    }
+  }
+
+  // replace all spaces with pluses
+  str = str.replaceAll(' ', '+');
+
+  return str;
 }
 
 app.get('/', function(req, res) {
@@ -83,16 +102,17 @@ app.get('/username', async function(req, res) {
 // *only called dynamically by jquery*
 app.get('/collaboratonGuess', async function(req, res) {
   let { artist1, artist2, depth } = req.query;
+  depth = depth - 1; // I want depth with an offset of 0 , but I want the user to have an offset of 1
 
   if (!artist1 || !artist2 || !depth || artist1 === '' || artist2 === '' || depth === '') {
     res.send(JSON.stringify({
       message: 'ERROR: You must enter a value for every field!',
-      likelihood: 0
+      likelihood: '~0%'
     }));
   }
 
-  let artist1Parsable = artist1.replace(' ', '+');
-  let artist2Parsable = artist2.replace(' ', '+');
+  let artist1Parsable = replaceNonEnglishCharacters(artist1);
+  let artist2Parsable = replaceNonEnglishCharacters(artist2);
 
   // Get artist information
   let artist1Info = await getArtistInformation(artist1Parsable, access_token);
@@ -102,23 +122,23 @@ app.get('/collaboratonGuess', async function(req, res) {
   if (artist1Info === 'token expired' || artist2Info === 'token expired') {
     res.send(JSON.stringify({
       message: 'ERROR: Token has expired, please re-login!',
-      likelihood: 0
+      likelihood: 'null'
     }));
   } else if (!artist1Info) {
     res.send(JSON.stringify({
       message: 'ERROR: Artist 1 was given as "' + artist1 + '" but no such artist was found...',
-      likelihood: 0
+      likelihood: '~0%'
     }));
   } else if (!artist2Info) {
     res.send(JSON.stringify({
       message: 'ERROR: Artist 2 was given as "' + artist2 + '" but no such artist was found...',
-      likelihood: 0
+      likelihood: '~0%'
     }));
 
   } else if (!isPostiveInteger(depth)) {
     res.send(JSON.stringify({
-      message: 'ERROR: depth must be given as a positive integer (includes 0)...',
-      likelihood: 0
+      message: 'ERROR: depth must be given as a positive integer...',
+      likelihood: '~0%'
     }));
 
   // If both the artists and depth are valid then find collaborators down for given depth
@@ -133,7 +153,7 @@ app.get('/collaboratonGuess', async function(req, res) {
     if (collaborators.length === 0) {
       res.send(JSON.stringify({
         message: 'Artist 1 (given as "' + artist1 + '") was found, but has no collaborating artists...',
-        likelihood: 0
+        likelihood: '~0%'
       }));
     
     // Check if artist 2 has any collaborators at all
@@ -142,15 +162,18 @@ app.get('/collaboratonGuess', async function(req, res) {
       let artist2name = artist2Info.name;
       let artist2Songs = await getArtistSongs(artist2Info.id, access_token);
       let tempCollaborators = getCollaborators(artist2, artist2Songs);
-      
+
+      // boolean representing whether artist2 was found among artist1's collaborators
+      let found = false;
+
       // Check if artist2 has any collaborators at all
       if (tempCollaborators.length === 0) {
         res.send(JSON.stringify({
           message: 'Artist 2 (given as "' + artist2 + '") was found, but has no collaborating artists...',
-          likelihood: 0
+          likelihood: '~0%'
         }));
       } else {
-        let found = false;
+        console.log('All parameters verified!');
 
         // If other artist in inital list of collaborators, then they have already collaborated!
         for (let j = 0; j < collaborators.length; j++) {
@@ -169,49 +192,60 @@ app.get('/collaboratonGuess', async function(req, res) {
          */
 
         // Artists have not collaborated, check if they have some connection further down
-        for (let i = 0; i < depth; i++) {
-          let new_collaborators = []
-          
-          // go through collaborators, get their collaborators and add to list
-          for (let j = 0; j < collaborators.length; j++) {
+        if (!found) {
+          for (let i = 0; i < depth; i++) {
+            console.log('At depth of ' + i);
+            let new_collaborators = []
+            
+            // go through collaborators, get their collaborators and add to list
+            for (let j = 0; j < collaborators.length; j++) {
+              console.log('Attending to artist #' + j + ' of ' + collaborators.length + ' at this depth');
 
-            // Check if this collaborator is the one we are looking for
-            if (collaborators[j] === artist2name) {
-              found = true;
-              res.send(JSON.stringify({
-                message: 'FOUND in depth ' + i,
-                // NOTE: below is my own formula for a version of Strong Triadic Closure that allows a probabilistic result!
-                likelihood: (Math.pow(0.5, i) * 100) + '%' 
-              }));
+              // Otherwise get the new collaborators for this user
+              let artistInfo = await getArtistInformation(replaceNonEnglishCharacters(collaborators[j]), access_token);
+              let artistSongs = await getArtistSongs(artistInfo.id, access_token);
+              let artistCollaborators = getCollaborators(collaborators[j], artistSongs);
+
+              // Add all the collaborators to the list of new collaborators TODO: forEach this bitch?
+              for (let k = 0; k < artistCollaborators.length; k++) {
+
+                // Check if this collaborator is the one we are looking for
+                if (artistCollaborators[k] === artist2name) {
+                  found = true;
+                  res.send(JSON.stringify({
+                    message: 'FOUND in depth ' + (i + 1),
+                    // NOTE: below is my own formula for a version of Strong Triadic Closure that allows a probabilistic result!
+                    likelihood: (Math.pow(0.5, (i + 1)) * 100) + '%' 
+                  }));
+                  break;
+                }
+                new_collaborators.push(artistCollaborators[k]);
+              }
+
+              // If the user was found, don't continue
+              if (found) {
+                break;
+              }
+            }
+
+            // If the user was found, don't continue
+            if (found) {
               break;
             }
 
-            // Otherwise get the new collaborators for this user
-            let artistInfo = await getArtistInformation(collaborators[j].replace(' ', '+'), access_token);
-            let artistSongs = await getArtistSongs(artistInfo.id, access_token);
-            let artistCollaborators = getCollaborators(collaborators[j], artistSongs);
-
-            // Add all the collaborators to the list of new collaborators TODO: forEach this bitch?
-            for (let k = 0; k < artistCollaborators.length; k++) {
-              new_collaborators.push(artistCollaborators[k]);
-            }
+            // User was not found: set up collaborators for the next run
+            collaborators = [...new Set(new_collaborators)];
           }
-
-          // If the user was found, don't continue
-          if (found) {
-            break;
-          }
-
-          // set up collaborators for the next run
-          collaborators = [...new Set(new_collaborators)];
         }
-        if (!found) {
-          res.send(JSON.stringify({
-            message: 'Artist 1 was searched as "' + artist1name + '" and Artist 2 was searched as "' + artist2name + '".',
-            collaborators: collaborators,
-            likelihood: 0
-          }));
-        }
+      }
+
+      // If artist2 wasn't found at any point, we'll say its a ~0% chance
+      if (!found) {
+        res.send(JSON.stringify({
+          message: 'Artist 1 was searched as "' + artist1name + '" and Artist 2 was searched as "' + artist2name + '".' +
+            ' There were a total of ' + collaborators.length + ' at the final depth of ' + depth + '.',
+          likelihood: '~0%'
+        }));
       }
     }
   }

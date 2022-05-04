@@ -15,9 +15,10 @@
         let id3 = 'depth';
         let depth = document.getElementById(id3).value;
 
+        // *the time added here is completely arbitrary, I just expect it to grow VERY quickly wr to depth*
         alert( "You've entered a depth of " + depth +
-                  " so please be prepared to wait for ~ " + Math.pow(2, depth) +
-                  " second(s).\n\nClick \"OK\" to begin search!" );
+                  " so please be prepared to wait for ~ " + (1 + Math.pow(5, Math.pow(depth, 2))) +
+                  " seconds.\n\nClick \"OK\" to begin search!" );
 
         $.get('/collaboratonGuess', {
           artist1: document.getElementById(id1).value,
@@ -33,9 +34,9 @@
           data = JSON.parse(data);
 
           // Show data
-          alert( data );
-          console.log(data);
-          console.log(data.message);
+          let alertVal = data.message +
+           '\n\nThe likelihood of these artists collaborating is ' + data.likelihood;
+          alert(alertVal);
         });
       }
 
@@ -58,7 +59,7 @@
   <body>
     <div class="container">
       <h1 id="header">Enter the artists you would like to search for!</h1>
-      <p id="subheader">Type in the name of two artists of who you'd like to test their likelihood of collaborating!</p>
+      <p id="subheader">Type in the name of two artists of whom you'd like to test their likelihood of collaborating (and the depth of the search)!</p>
       <br>
       <form id="query" action="javascript:completeSearch()">
         <label for="artist1">First artist name:</label>
@@ -67,7 +68,7 @@
         <label for="artist2">Second artist name:</label>
         <input type="text" id="artist2" name="artist2" class="form-control" placeholder="Enter your second artist's name"/>
         <br>
-        <label for="depth">Depth of search:</label>
+        <label for="depth">Depth of search: (a depth of 1 is the artist's current collaborators)</label>
         <input type="text" id="depth" name="depth" class="form-control" placeholder="Enter your desired depth of search"/>
         <br>
         <input type="submit" id="search" class="btn btn-primary" value="Search" />
