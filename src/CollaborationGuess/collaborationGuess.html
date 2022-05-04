@@ -1,50 +1,74 @@
 <!doctype html>
 <html>
   <head>
-    <title>Guess the next Collaborator!</title>
+    <title>The Reverse Nardwuar</title>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="/src/CollaborationGuess/collaborationGuess.css">
+    <link rel="stylesheet" href="./CollaborationGuess/collaborationGuess.css">
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script>
-      	var completeSearch = function() {
-          let id1 = 'artist1';
-          let id2 = 'artist2';
-          let id3 = 'depth';
 
-          $.get('/collaboratonGuess', {
-            artist1: document.getElementById(id1).value,
-            artist2: document.getElementById(id2).value,
-            depth: document.getElementById(id3).value,
-          }, function(data) {
+      // function to search for collaboration liklihood
+      let completeSearch = function() {
+        let id1 = 'artist1';
+        let id2 = 'artist2';
+        let id3 = 'depth';
+        let depth = document.getElementById(id3).value;
 
-            // Remove all given fields
-            document.getElementById(id1).value = "";
-            document.getElementById(id2).value = "";
-            document.getElementById(id3).value = "";
+        alert( "You've entered a depth of " + depth +
+                  " so please be prepared to wait for ~ " + Math.pow(2, depth) +
+                  " second(s).\n\nClick \"OK\" to begin search!" );
 
-            // Show data
-            alert( data );
-            console.log(data);
-            console.log(data.message);
-          });
-        }
+        $.get('/collaboratonGuess', {
+          artist1: document.getElementById(id1).value,
+          artist2: document.getElementById(id2).value,
+          depth,
+        }, function(data) {
+          // Remove all given fields
+          document.getElementById(id1).value = "";
+          document.getElementById(id2).value = "";
+          document.getElementById(id3).value = "";
+
+          // Parse given JSON string
+          data = JSON.parse(data);
+
+          // Show data
+          alert( data );
+          console.log(data);
+          console.log(data.message);
+        });
+      }
+
+      // Once document is ready, start searching
+      $(document).ready(function() {
+        $.get('/username', function(data) {
+          // Parse given JSON string
+          data = JSON.parse(data);
+
+          // add username to header
+          let username = data.userName;
+          console.log(username);
+          $("#header").html('Welcome <strong>' + username + '</strong>! Enter the artists you would like to search for!');
+          
+        })
+      });
     </script>
   </head>
 
   <body>
     <div class="container">
-      <h1>Enter the artists you would like to search for!</h1>
-      <p>Type in the name of two artists of who you'd like to test their likelihood of collaborating!</p>
+      <h1 id="header">Enter the artists you would like to search for!</h1>
+      <p id="subheader">Type in the name of two artists of who you'd like to test their likelihood of collaborating!</p>
+      <br>
       <form id="query" action="javascript:completeSearch()">
         <label for="artist1">First artist name:</label>
-        <input type="text" id="artist1" name="artist1" class="form-control" placeholder="Type your first artist's name (spelled correctly!)"/>
+        <input type="text" id="artist1" name="artist1" class="form-control" placeholder="Enter your first artist's name"/>
         <br>
         <label for="artist2">Second artist name:</label>
-        <input type="text" id="artist2" name="artist2" class="form-control" placeholder="Type your second artist's name (spelled correctly!)"/>
+        <input type="text" id="artist2" name="artist2" class="form-control" placeholder="Enter your second artist's name"/>
         <br>
         <label for="depth">Depth of search:</label>
-        <input type="text" id="depth" name="depth" class="form-control" placeholder="Type the desired depth of your search (just a single integer!)"/>
+        <input type="text" id="depth" name="depth" class="form-control" placeholder="Enter your desired depth of search"/>
         <br>
         <input type="submit" id="search" class="btn btn-primary" value="Search" />
       </form>

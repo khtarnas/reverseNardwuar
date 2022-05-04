@@ -4,7 +4,7 @@ import request from 'request'; // "Request" library
 import cors from 'cors';
 import querystring from 'querystring';
 import cookieParser from 'cookie-parser';
-import path from 'path';
+import fetch from 'node-fetch';
 
 // Get directory path
 import { fileURLToPath } from 'url';
@@ -14,13 +14,17 @@ const __dirname = dirname(__filename);
 
 // Import functions from other files
 import { getArtistInformation, getArtistSongs, getCollaborators } from './CollaborationGuess/collaborationGuess.js';
+import { access } from 'fs';
 
 // Set important spotify api accoutn information
 let client_id = 'a3aa685edb1e44249fec2c5871c69c46'; // Your client id
 let client_secret = '7237be6e49bc4eb4bb10b70cdf9af5a9';
 let redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 let stateKey = 'spotify_auth_state';
-let access_token = 'BQAQ1CZnpvbf0tq7-LiMCBFsaZK-ZYme8bPdISLVtB0pzz6FD1pPnp9gB2hsWN0M8su_bUTHegYp6Ayi5_re899WGbXW3MVKuB0Xa_TOBmX4YmFgU5tQK2w-0mlpr5DHfRAXdiUvVYekzn6g7rGL_vzW7qFU6yUThW4ldfO4NPPxtr40jkvDNA';
+let access_token;
+let refresh_token;
+let userName;
+let needsToAuthorize = true; // if we go to the route '/' do we need to authorize first?
 
 let app = express();
 app.use(cors())
@@ -37,46 +41,181 @@ app.use(
 /**
  * Functions for the Reverse Nardwuar feature
  */
+
+const isPostiveInteger = function (str) {
+  const val = Number(str);
+
+  // check if integer and positive
+  if (Number.isInteger(val) && val >= 0) {
+    return true;
+  }
+  return false;
+}
+
 app.get('/', function(req, res) {
 
   // check if we have gotten an access_token
-  if (req.query.access_token) {
-
-    access_token = req.query.access_token;
+  if (!needsToAuthorize && access_token) {
+    needsToAuthorize = true;
     res.sendFile('CollaborationGuess/collaborationGuess.html', { root: __dirname })
   } else {
 
     // send to authorize first
+    needsToAuthorize = false;
     console.log("Must authorize first!");
     res.redirect('/authorize');
   }
 });
 
+// *only meant to be called dynamically by jquery*
+app.get('/username', async function(req, res) { 
+  if (userName) {
+    res.send(JSON.stringify({
+      userName
+    }));
+  } else {
+    res.send(JSON.stringify({
+      userName: 'unknown...'
+    }));
+  }
+})
+
+// *only called dynamically by jquery*
 app.get('/collaboratonGuess', async function(req, res) {
   let { artist1, artist2, depth } = req.query;
+
+  if (!artist1 || !artist2 || !depth || artist1 === '' || artist2 === '' || depth === '') {
+    res.send(JSON.stringify({
+      message: 'ERROR: You must enter a value for every field!',
+      likelihood: 0
+    }));
+  }
 
   let artist1Parsable = artist1.replace(' ', '+');
   let artist2Parsable = artist2.replace(' ', '+');
 
-  // Get artist1 information, error if not a real artist
+  // Get artist information
   let artist1Info = await getArtistInformation(artist1Parsable, access_token);
-  if (!artist1Info) {
-    res.send(JSON.stringify({
-      message: 'ERROR: Artist 1 was given as "' + artist1 + '" but no such artist was found...'
-    }));
-  } else {
+  let artist2Info = await getArtistInformation(artist2Parsable, access_token);
 
-    // get artist1's collaborators and send them
+  // Parameter error check
+  if (artist1Info === 'token expired' || artist2Info === 'token expired') {
+    res.send(JSON.stringify({
+      message: 'ERROR: Token has expired, please re-login!',
+      likelihood: 0
+    }));
+  } else if (!artist1Info) {
+    res.send(JSON.stringify({
+      message: 'ERROR: Artist 1 was given as "' + artist1 + '" but no such artist was found...',
+      likelihood: 0
+    }));
+  } else if (!artist2Info) {
+    res.send(JSON.stringify({
+      message: 'ERROR: Artist 2 was given as "' + artist2 + '" but no such artist was found...',
+      likelihood: 0
+    }));
+
+  } else if (!isPostiveInteger(depth)) {
+    res.send(JSON.stringify({
+      message: 'ERROR: depth must be given as a positive integer (includes 0)...',
+      likelihood: 0
+    }));
+
+  // If both the artists and depth are valid then find collaborators down for given depth
+  }else {
+
+    // get artist1's collaborators
     let artist1name = artist1Info.name;
     let artist1Songs = await getArtistSongs(artist1Info.id, access_token);
-    let artist1Collaborators = getCollaborators(artist1, artist1Songs);
-    res.send(JSON.stringify({
-      message: 'Artist 1 was given as "' + artist1 + '" and "' + artist1name + '" was found!',
-      collaborators: artist1Collaborators
-    }));
+    let collaborators = getCollaborators(artist1, artist1Songs);
+    
+    // Check if artist 1 has any collaborators at all
+    if (collaborators.length === 0) {
+      res.send(JSON.stringify({
+        message: 'Artist 1 (given as "' + artist1 + '") was found, but has no collaborating artists...',
+        likelihood: 0
+      }));
+    
+    // Check if artist 2 has any collaborators at all
+    } else {
+      // get artist2's collaborators
+      let artist2name = artist2Info.name;
+      let artist2Songs = await getArtistSongs(artist2Info.id, access_token);
+      let tempCollaborators = getCollaborators(artist2, artist2Songs);
+      
+      // Check if artist2 has any collaborators at all
+      if (tempCollaborators.length === 0) {
+        res.send(JSON.stringify({
+          message: 'Artist 2 (given as "' + artist2 + '") was found, but has no collaborating artists...',
+          likelihood: 0
+        }));
+      } else {
+        let found = false;
+
+        // If other artist in inital list of collaborators, then they have already collaborated!
+        for (let j = 0; j < collaborators.length; j++) {
+          if (collaborators[j] === artist2name) {
+            found = true;
+            res.send(JSON.stringify({
+              message: 'These artists have already collaborated!',
+              likelihood: '100%'
+            }));
+            break;
+          }
+        }
+
+        /**
+         * NOTE: this next part is BFS, it searchs down a graph, breadth first!
+         */
+
+        // Artists have not collaborated, check if they have some connection further down
+        for (let i = 0; i < depth; i++) {
+          let new_collaborators = []
+          
+          // go through collaborators, get their collaborators and add to list
+          for (let j = 0; j < collaborators.length; j++) {
+
+            // Check if this collaborator is the one we are looking for
+            if (collaborators[j] === artist2name) {
+              found = true;
+              res.send(JSON.stringify({
+                message: 'FOUND in depth ' + i,
+                // NOTE: below is my own formula for a version of Strong Triadic Closure that allows a probabilistic result!
+                likelihood: (Math.pow(0.5, i) * 100) + '%' 
+              }));
+              break;
+            }
+
+            // Otherwise get the new collaborators for this user
+            let artistInfo = await getArtistInformation(collaborators[j].replace(' ', '+'), access_token);
+            let artistSongs = await getArtistSongs(artistInfo.id, access_token);
+            let artistCollaborators = getCollaborators(collaborators[j], artistSongs);
+
+            // Add all the collaborators to the list of new collaborators TODO: forEach this bitch?
+            for (let k = 0; k < artistCollaborators.length; k++) {
+              new_collaborators.push(artistCollaborators[k]);
+            }
+          }
+
+          // If the user was found, don't continue
+          if (found) {
+            break;
+          }
+
+          // set up collaborators for the next run
+          collaborators = [...new Set(new_collaborators)];
+        }
+        if (!found) {
+          res.send(JSON.stringify({
+            message: 'Artist 1 was searched as "' + artist1name + '" and Artist 2 was searched as "' + artist2name + '".',
+            collaborators: collaborators,
+            likelihood: 0
+          }));
+        }
+      }
+    }
   }
 });
-
 
 /**
  * Functions for Authorization
@@ -90,7 +229,7 @@ app.get('/authorize', function(req, res) {
  * @param  {number} length The length of the string
  * @return {string} The generated string
  */
- let generateRandomString = function(length) {
+const generateRandomString = function(length) {
   let text = '';
   let possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
@@ -117,7 +256,7 @@ app.get('/login', function(req, res) {
     }));
 });
 
-app.get('/callback', function(req, res) {
+app.get('/callback', async function(req, res) {
 
   // your application requests refresh and access tokens
   // after checking the state parameter
@@ -146,29 +285,27 @@ app.get('/callback', function(req, res) {
       json: true
     };
 
-    request.post(authOptions, function(error, response, body) {
+    request.post(authOptions, async function(error, response, body) {
       if (!error && response.statusCode === 200) {
 
-        let access_token = body.access_token,
-            refresh_token = body.refresh_token;
-
-        let options = {
-          url: 'https://api.spotify.com/v1/me',
-          headers: { 'Authorization': 'Bearer ' + access_token },
-          json: true
-        };
+        // Set access token and refresh token (they'll be held in this file)
+        // TODO: sessions would be a better way to do this
+        access_token = body.access_token;
+        refresh_token = body.refresh_token;
 
         // use the access token to access the Spotify Web API
-        request.get(options, function(error, response, body) {
-          console.log(body);
+        const selfQuery = await fetch('https://api.spotify.com/v1/me', {
+          method: 'GET',
+          headers: {
+            'Authorization': 'Bearer ' + access_token,
+          },
+          json: true
         });
+        const results = await selfQuery.json();
+        userName = results.display_name;
 
         // we can also pass the token to the browser to make requests from there
-        res.redirect('/?' +
-          querystring.stringify({
-            access_token: access_token,
-            refresh_token: refresh_token
-          }));
+        res.redirect('/');
       } else {
         res.redirect('/?' +
           querystring.stringify({

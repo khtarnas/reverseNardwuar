@@ -19,6 +19,9 @@ let getArtistInformation = async function(name, access_token) {
   const results = await query.json();
 
   // Return information of most matching artist
+  if (tokenExpired(results)) {
+    return 'token expired';
+  }
   return results.artists.items[0];
 };
 
@@ -102,7 +105,8 @@ let getCollaborators = function(name, songs) {
  */
 let tokenExpired = function(results) {
   if (results.error) {
-    if (results.error.message === 'The access token expired') {
+    if (results.error.message === 'The access token expired' ||
+              results.error.message ===  'Invalid access token') {
       return true;
     }
   }
