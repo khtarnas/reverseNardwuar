@@ -19,7 +19,7 @@ let client_id = 'a3aa685edb1e44249fec2c5871c69c46'; // Your client id
 let client_secret = '7237be6e49bc4eb4bb10b70cdf9af5a9';
 let redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 let stateKey = 'spotify_auth_state';
-let access_token = 'BQAmimy9ilkIrsgUDp0p59ybCuV7oCm08QAbw8gCqldaYdbuQAirIxGw3krY0Ci5Iv4rd04VPoAE9NNj70U6A6MFbufsON6D7e21dUj4sLCd4Ew13XAUXq2d71eZV5RqDMsjWS1YZ217gPZQ3NRMPmCSvLYJRHk8sK43bPj48VFm-AdPVwKO4Q';
+let access_token = 'BQBVJiyBWZz4AcIuEgvb0LOuFWv1izmuetoSS2tlhwOlAzAMNPVc2t05G1C-5140aD1WaD-yRM_NBOKem-ICrN9CghTeud4sNUy49F1kpj0mWEK_WmSHw4TWtan8PPcg3GKM8WOy7aDu_5Lar2lCIpDwc6OcopWLI4AiRAV-H9hRlbdepAriaA';
 
 let app = express();
 app.use(cors())
@@ -53,10 +53,11 @@ app.get('/x', async function(req, res) {
   let name1 = 'Bruno Major'.replace(' ', '+');
   let name2 = 'Bruno Mars'.replace(' ', '+');
 
-  let artist1 = await getArtistInformation(name1, access_token);
-  console.log(artist1.id);
-  console.log(await getArtistSongs(artist1.id, access_token));
-  // console.log(await getArtistSongs(name1, access_token))
+  let artist1 = await getArtistInformation(name2, access_token);
+  let artist1Songs = await getArtistSongs(artist1.id, access_token);
+  let artist1Collaborators = getCollaborators('Bruno Mars', artist1Songs);
+
+  console.log(artist1Collaborators);
 });
 
 
