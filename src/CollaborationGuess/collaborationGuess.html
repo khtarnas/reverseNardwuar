@@ -11,13 +11,20 @@
     <div class="container">
       <h1>Enter the artists you would like to search for!</h1>
       <p>Type in the name of two artists of who you'd like to test their likelihood of collaborating!</p>
-      <form id="query">
-          <input type="text" id="artist1" value="" class="form-control" placeholder="Type your first artist's name"/>
+      <form id="query" action="/test" method="GET">
+          <input type="text" id="artist1" value="jk" class="form-control" placeholder="Type your first artist's name"/>
           <br>
-          <input type="text" id="artist2" value="" class="form-control" placeholder="Type your second artist's name"/>
+          <input type="text" id="artist2" value="kkn" class="form-control" placeholder="Type your second artist's name"/>
           <br>
           <input type="submit" id="search" class="btn btn-primary" value="Search" />
       </form>
+      <form action="/test" method="get">
+        <label for="fname">First name:</label>
+        <input type="text" id="fname" name="fname"><br><br>
+        <label for="lname">Last name:</label>
+        <input type="text" id="lname" name="lname"><br><br>
+        <input type="submit" value="Submit">
+      </form> 
     </div>
   </body>
 </html>
