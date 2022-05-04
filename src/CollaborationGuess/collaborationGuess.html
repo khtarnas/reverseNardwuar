@@ -15,10 +15,31 @@
         let id3 = 'depth';
         let depth = document.getElementById(id3).value;
 
-        // *the time added here is completely arbitrary, I just expect it to grow VERY quickly wr to depth*
-        alert( "You've entered a depth of " + depth +
-                  " so please be prepared to wait for ~ " + (1 + Math.pow(5, Math.pow(depth, 2))) +
-                  " seconds.\n\nClick \"OK\" to begin search!" );
+        // *the time added here is fairly arbitrary, I just expect it to grow VERY quickly wr to depth*
+        if (depth < 1) {
+          alert( "Invalid depth, there will be another error message following. \n\nClick \"OK\" to continue.");
+        } else if (depth == 1) {
+          alert( "You've entered a depth of " + depth +
+            " so please be prepared to wait for ~ " + 30 +
+            " seconds.\n\nClick \"OK\" to begin search!" );
+        } else if (depth == 2) {
+          alert( "You've entered a depth of " + depth +
+            " so please be prepared to wait for ~ " + 1 +
+            " minute.\n\nClick \"OK\" to begin search!" );
+        } else if (depth == 3) {
+          alert( "You've entered a depth of " + depth +
+            " so please be prepared to wait for ~ " + 5 +
+            " minutes.\n\nClick \"OK\" to begin search!" );
+        } else if (depth == 4) {
+          alert( "You've entered a depth of " + depth +
+            ". This will likely have a very large wait time with a rough guess of ~ " + 30 +
+            " minutes.\n\nClick \"OK\" to begin search!" );
+        } else {
+          alert( "You've entered a depth of " + depth +
+            ". This will likely have a very large wait time taking possibly over an hour or even hours" +
+            " \n\nClick \"OK\" to begin search!" );
+        }
+        
 
         $.get('/collaboratonGuess', {
           artist1: document.getElementById(id1).value,

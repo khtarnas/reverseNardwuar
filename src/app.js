@@ -47,7 +47,7 @@ const isPostiveInteger = function (str) {
   const val = Number(str);
 
   // check if integer and positive
-  if (Number.isInteger(val) && val > 0) {
+  if (Number.isInteger(val) && val >= 0) {
     return true;
   }
   return false;
@@ -104,148 +104,149 @@ app.get('/collaboratonGuess', async function(req, res) {
   let { artist1, artist2, depth } = req.query;
   depth = depth - 1; // I want depth with an offset of 0 , but I want the user to have an offset of 1
 
-  if (!artist1 || !artist2 || !depth || artist1 === '' || artist2 === '' || depth === '') {
+  if (artist1 === '' || artist2 === '' || depth === '') {
     res.send(JSON.stringify({
       message: 'ERROR: You must enter a value for every field!',
       likelihood: '~0%'
     }));
-  }
+  } else {
 
-  let artist1Parsable = replaceNonEnglishCharacters(artist1);
-  let artist2Parsable = replaceNonEnglishCharacters(artist2);
+    let artist1Parsable = replaceNonEnglishCharacters(artist1);
+    let artist2Parsable = replaceNonEnglishCharacters(artist2);
 
-  // Get artist information
-  let artist1Info = await getArtistInformation(artist1Parsable, access_token);
-  let artist2Info = await getArtistInformation(artist2Parsable, access_token);
+    // Get artist information
+    let artist1Info = await getArtistInformation(artist1Parsable, access_token);
+    let artist2Info = await getArtistInformation(artist2Parsable, access_token);
 
-  // Parameter error check
-  if (artist1Info === 'token expired' || artist2Info === 'token expired') {
-    res.send(JSON.stringify({
-      message: 'ERROR: Token has expired, please re-login!',
-      likelihood: 'null'
-    }));
-  } else if (!artist1Info) {
-    res.send(JSON.stringify({
-      message: 'ERROR: Artist 1 was given as "' + artist1 + '" but no such artist was found...',
-      likelihood: '~0%'
-    }));
-  } else if (!artist2Info) {
-    res.send(JSON.stringify({
-      message: 'ERROR: Artist 2 was given as "' + artist2 + '" but no such artist was found...',
-      likelihood: '~0%'
-    }));
-
-  } else if (!isPostiveInteger(depth)) {
-    res.send(JSON.stringify({
-      message: 'ERROR: depth must be given as a positive integer...',
-      likelihood: '~0%'
-    }));
-
-  // If both the artists and depth are valid then find collaborators down for given depth
-  }else {
-
-    // get artist1's collaborators
-    let artist1name = artist1Info.name;
-    let artist1Songs = await getArtistSongs(artist1Info.id, access_token);
-    let collaborators = getCollaborators(artist1, artist1Songs);
-    
-    // Check if artist 1 has any collaborators at all
-    if (collaborators.length === 0) {
+    // Parameter error check
+    if (artist1Info === 'token expired' || artist2Info === 'token expired') {
       res.send(JSON.stringify({
-        message: 'Artist 1 (given as "' + artist1 + '") was found, but has no collaborating artists...',
+        message: 'ERROR: Token has expired, please re-login!',
+        likelihood: 'null'
+      }));
+    } else if (!artist1Info) {
+      res.send(JSON.stringify({
+        message: 'ERROR: Artist 1 was given as "' + artist1 + '" but no such artist was found...',
         likelihood: '~0%'
       }));
-    
-    // Check if artist 2 has any collaborators at all
-    } else {
-      // get artist2's collaborators
-      let artist2name = artist2Info.name;
-      let artist2Songs = await getArtistSongs(artist2Info.id, access_token);
-      let tempCollaborators = getCollaborators(artist2, artist2Songs);
+    } else if (!artist2Info) {
+      res.send(JSON.stringify({
+        message: 'ERROR: Artist 2 was given as "' + artist2 + '" but no such artist was found...',
+        likelihood: '~0%'
+      }));
 
-      // boolean representing whether artist2 was found among artist1's collaborators
-      let found = false;
+    } else if (!isPostiveInteger(depth)) {
+      res.send(JSON.stringify({
+        message: 'ERROR: depth must be given as a positive integer...',
+        likelihood: '~0%'
+      }));
 
-      // Check if artist2 has any collaborators at all
-      if (tempCollaborators.length === 0) {
+    // If both the artists and depth are valid then find collaborators down for given depth
+    }else {
+
+      // get artist1's collaborators
+      let artist1name = artist1Info.name;
+      let artist1Songs = await getArtistSongs(artist1Info.id, access_token);
+      let collaborators = getCollaborators(artist1, artist1Songs);
+      
+      // Check if artist 1 has any collaborators at all
+      if (collaborators.length === 0) {
         res.send(JSON.stringify({
-          message: 'Artist 2 (given as "' + artist2 + '") was found, but has no collaborating artists...',
+          message: 'Artist 1 (given as "' + artist1 + '") was found, but has no collaborating artists...',
           likelihood: '~0%'
         }));
+      
+      // Check if artist 2 has any collaborators at all
       } else {
-        console.log('All parameters verified!');
+        // get artist2's collaborators
+        let artist2name = artist2Info.name;
+        let artist2Songs = await getArtistSongs(artist2Info.id, access_token);
+        let tempCollaborators = getCollaborators(artist2, artist2Songs);
 
-        // If other artist in inital list of collaborators, then they have already collaborated!
-        for (let j = 0; j < collaborators.length; j++) {
-          if (collaborators[j] === artist2name) {
-            found = true;
-            res.send(JSON.stringify({
-              message: 'These artists have already collaborated!',
-              likelihood: '100%'
-            }));
-            break;
+        // boolean representing whether artist2 was found among artist1's collaborators
+        let found = false;
+
+        // Check if artist2 has any collaborators at all
+        if (tempCollaborators.length === 0) {
+          res.send(JSON.stringify({
+            message: 'Artist 2 (given as "' + artist2 + '") was found, but has no collaborating artists...',
+            likelihood: '~0%'
+          }));
+        } else {
+          console.log('All parameters verified!');
+
+          // If other artist in inital list of collaborators, then they have already collaborated!
+          for (let j = 0; j < collaborators.length; j++) {
+            if (collaborators[j] === artist2name) {
+              found = true;
+              res.send(JSON.stringify({
+                message: 'These artists have already collaborated!',
+                likelihood: '100%'
+              }));
+              break;
+            }
           }
-        }
 
-        /**
-         * NOTE: this next part is BFS, it searchs down a graph, breadth first!
-         */
+          /**
+           * NOTE: this next part is BFS, it searchs down a graph, breadth first!
+           */
 
-        // Artists have not collaborated, check if they have some connection further down
-        if (!found) {
-          for (let i = 0; i < depth; i++) {
-            console.log('At depth of ' + i);
-            let new_collaborators = []
-            
-            // go through collaborators, get their collaborators and add to list
-            for (let j = 0; j < collaborators.length; j++) {
-              console.log('Attending to artist #' + j + ' of ' + collaborators.length + ' at this depth');
+          // Artists have not collaborated, check if they have some connection further down
+          if (!found) {
+            for (let i = 0; i < depth; i++) {
+              console.log('At depth of ' + i);
+              let new_collaborators = []
+              
+              // go through collaborators, get their collaborators and add to list
+              for (let j = 0; j < collaborators.length; j++) {
+                console.log('Attending to artist #' + j + ' of ' + collaborators.length + ' at this depth');
 
-              // Otherwise get the new collaborators for this user
-              let artistInfo = await getArtistInformation(replaceNonEnglishCharacters(collaborators[j]), access_token);
-              let artistSongs = await getArtistSongs(artistInfo.id, access_token);
-              let artistCollaborators = getCollaborators(collaborators[j], artistSongs);
+                // Otherwise get the new collaborators for this user
+                let artistInfo = await getArtistInformation(replaceNonEnglishCharacters(collaborators[j]), access_token);
+                let artistSongs = await getArtistSongs(artistInfo.id, access_token);
+                let artistCollaborators = getCollaborators(collaborators[j], artistSongs);
 
-              // Add all the collaborators to the list of new collaborators TODO: forEach this bitch?
-              for (let k = 0; k < artistCollaborators.length; k++) {
+                // Add all the collaborators to the list of new collaborators TODO: forEach this bitch?
+                for (let k = 0; k < artistCollaborators.length; k++) {
 
-                // Check if this collaborator is the one we are looking for
-                if (artistCollaborators[k] === artist2name) {
-                  found = true;
-                  res.send(JSON.stringify({
-                    message: 'FOUND in depth ' + (i + 1),
-                    // NOTE: below is my own formula for a version of Strong Triadic Closure that allows a probabilistic result!
-                    likelihood: (Math.pow(0.5, (i + 1)) * 100) + '%' 
-                  }));
+                  // Check if this collaborator is the one we are looking for
+                  if (artistCollaborators[k] === artist2name) {
+                    found = true;
+                    res.send(JSON.stringify({
+                      message: 'FOUND in depth ' + (i + 2),
+                      // NOTE: below is my own formula for a version of Strong Triadic Closure that allows a probabilistic result!
+                      likelihood: (Math.pow(0.5, (i + 1)) * 100) + '%' 
+                    }));
+                    break;
+                  }
+                  new_collaborators.push(artistCollaborators[k]);
+                }
+
+                // If the user was found, don't continue
+                if (found) {
                   break;
                 }
-                new_collaborators.push(artistCollaborators[k]);
               }
 
               // If the user was found, don't continue
               if (found) {
                 break;
               }
-            }
 
-            // If the user was found, don't continue
-            if (found) {
-              break;
+              // User was not found: set up collaborators for the next run
+              collaborators = [...new Set(new_collaborators)];
             }
-
-            // User was not found: set up collaborators for the next run
-            collaborators = [...new Set(new_collaborators)];
           }
         }
-      }
 
-      // If artist2 wasn't found at any point, we'll say its a ~0% chance
-      if (!found) {
-        res.send(JSON.stringify({
-          message: 'Artist 1 was searched as "' + artist1name + '" and Artist 2 was searched as "' + artist2name + '".' +
-            ' There were a total of ' + collaborators.length + ' at the final depth of ' + depth + '.',
-          likelihood: '~0%'
-        }));
+        // If artist2 wasn't found at any point, we'll say its a ~0% chance
+        if (!found) {
+          res.send(JSON.stringify({
+            message: 'Artist 1 was searched as "' + artist1name + '" and Artist 2 was searched as "' + artist2name + '".' +
+              ' There were a total of ' + collaborators.length + ' at the final depth of ' + (depth + 1) + '.',
+            likelihood: '~0%'
+          }));
+        }
       }
     }
   }

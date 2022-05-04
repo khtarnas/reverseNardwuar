@@ -35,8 +35,8 @@
           depth it was found and what this means.</p>
 
         <p>The current algorithm is very simple. The probability of two artist collaborating is just
-          0.5 to the power of the depth the second artist was found at. E.g. If the artist was found
-          at a depth of 3, then the returned likelihood will be 0.5^3 which equals 0.125 so 12.5%.</p>
+          0.5 to the power of one minus the depth the second artist was found at. E.g. If the artist was found
+          at a depth of 4, then the returned likelihood will be 0.5^(4-1) which equals 0.125 so 12.5%.</p>
 
         <p><strong>Please login with your spotify accoutn to check about future collaborations!</strong></p>
         <a href="/login" class="btn btn-primary">Log in with Spotify</a>
