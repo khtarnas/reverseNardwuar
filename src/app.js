@@ -4,8 +4,9 @@ import request from 'request'; // "Request" library
 import cors from 'cors';
 import querystring from 'querystring';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 
-// Get directory
+// Get directory path
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
@@ -19,12 +20,19 @@ let client_id = 'a3aa685edb1e44249fec2c5871c69c46'; // Your client id
 let client_secret = '7237be6e49bc4eb4bb10b70cdf9af5a9';
 let redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 let stateKey = 'spotify_auth_state';
-let access_token = 'BQBVJiyBWZz4AcIuEgvb0LOuFWv1izmuetoSS2tlhwOlAzAMNPVc2t05G1C-5140aD1WaD-yRM_NBOKem-ICrN9CghTeud4sNUy49F1kpj0mWEK_WmSHw4TWtan8PPcg3GKM8WOy7aDu_5Lar2lCIpDwc6OcopWLI4AiRAV-H9hRlbdepAriaA';
+let access_token = 'BQAQ1CZnpvbf0tq7-LiMCBFsaZK-ZYme8bPdISLVtB0pzz6FD1pPnp9gB2hsWN0M8su_bUTHegYp6Ayi5_re899WGbXW3MVKuB0Xa_TOBmX4YmFgU5tQK2w-0mlpr5DHfRAXdiUvVYekzn6g7rGL_vzW7qFU6yUThW4ldfO4NPPxtr40jkvDNA';
 
 let app = express();
 app.use(cors())
-   .use(cookieParser())
-   .use(express.urlencoded({extended:false}));
+   .use(cookieParser());
+
+// Import middleware to handle body and url data sending
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  }),
+);
 
 /**
  * Functions for the Reverse Nardwuar feature
@@ -34,8 +42,8 @@ app.get('/', function(req, res) {
   // check if we have gotten an access_token
   if (req.query.access_token) {
 
-    const access = req.query.access_token;
-    res.sendFile('CollaborationGuess/collaborationGuess.html', {root: __dirname })
+    access_token = req.query.access_token;
+    res.sendFile('CollaborationGuess/collaborationGuess.html', { root: __dirname })
   } else {
 
     // send to authorize first
@@ -44,23 +52,30 @@ app.get('/', function(req, res) {
   }
 });
 
-app.get('/test', function(req, res) {
-  console.log(req.query);
+app.get('/collaboratonGuess', async function(req, res) {
+  let { artist1, artist2, depth } = req.query;
+
+  let artist1Parsable = artist1.replace(' ', '+');
+  let artist2Parsable = artist2.replace(' ', '+');
+
+  // Get artist1 information, error if not a real artist
+  let artist1Info = await getArtistInformation(artist1Parsable, access_token);
+  if (!artist1Info) {
+    res.send(JSON.stringify({
+      message: 'ERROR: Artist 1 was given as "' + artist1 + '" but no such artist was found...'
+    }));
+  } else {
+
+    // get artist1's collaborators and send them
+    let artist1name = artist1Info.name;
+    let artist1Songs = await getArtistSongs(artist1Info.id, access_token);
+    let artist1Collaborators = getCollaborators(artist1, artist1Songs);
+    res.send(JSON.stringify({
+      message: 'Artist 1 was given as "' + artist1 + '" and "' + artist1name + '" was found!',
+      collaborators: artist1Collaborators
+    }));
+  }
 });
-
-app.get('/x', async function(req, res) {
-  
-  let name1 = 'Bruno Major'.replace(' ', '+');
-  let name2 = 'Bruno Mars'.replace(' ', '+');
-
-  let artist1 = await getArtistInformation(name2, access_token);
-  let artist1Songs = await getArtistSongs(artist1.id, access_token);
-  let artist1Collaborators = getCollaborators('Bruno Mars', artist1Songs);
-
-  console.log(artist1Collaborators);
-});
-
-
 
 
 /**
