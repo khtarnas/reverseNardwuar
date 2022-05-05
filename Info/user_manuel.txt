@@ -18,6 +18,9 @@ username: 06a0fampxjede1zey8zo2mnqj
 email: khtarnas@sas.upenn.edu
 password: nets150password
 
+*KEY: if you are asked to re-login because your token expired all you have to do is refresh
+ the page and it will handle it for you!*
+
 If you would prefer to use your own Spotify account (the only difference is what name I
  dynamically render at the top of the page), email me the account username and email and I
  can add you asap!
@@ -42,7 +45,7 @@ Also, since everything happens in one swoop, it is hard to tell that things are 
  console.logs that allow you to watch its progress.*
 
 *Cool side feature: if two artists are not found to have a loosened STC at the given depth,
-the application will tell you how many artists were searched!*
+the application will tell you how many artists were searched! "image_7" shows an example of this!*
 
 Here are some random things I stumbled on that may be useful/interesting in your testing:
 - Steve Aoki has 160 collaborators at depth 0 so he's an interesting one to play with.
@@ -52,7 +55,8 @@ Here are some random things I stumbled on that may be useful/interesting in your
  you will often notice runtime differences between which artist you put first (no accuracy
  difference). Feel free to test this with My Chemical Romance and Steve Aoki (it is the biggest
  difference I have found!).
-- Bruno Major has never collaborated with anyone. This will be quick test.
+- Bruno Major has never collaborated with anyone. This will be quick test. "image_5" also
+ shows this
 - All the super popular artists are obviously good ones. Bruno Mars has deep pockets (in
  terms of collaboration). He obviously is part of Silk Sonic, so that's another easy quick
  test. Also since he has collaborated with some very big artists, it may be pretty easy to
