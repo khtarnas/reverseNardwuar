@@ -1,3 +1,23 @@
-Steve Aoki has 160 collaborators at depth 0 so he's an interesting one to play with.
+Name: The Reverse Nardwuar
 
-All the super popular artists are obviously good ones.
+Description: An application that takes in a primary music artist and does a Breadth First Search (BFS)
+ through a graph where all music artists on Spotify are nodes and a collaboration on a song (on Spotify) is
+ an edge between the artists on the song. The BFS is done only for a given depth (as otherwise it would run
+ indefinitely). While doing this search, the program checks if the node representing a second given music
+ artist is found. If it is, then we use the concept of Strong Triadic Closure (STC) to determine that there
+ is a chance that they will collaborate together in the future. This chance is dependent on the depth at
+ which the second artist is found (the distance from the first artist) which can be thought of a loosening
+ of the STC property with a probabilistic outcome rather than a definite one. The inputs are two strings
+ representing two music artists and an integer representing the depth of the search and the output is a
+ percentage likelihood of those artists collaborating.
+
+Categories: Graph and Graph Algorithms (through the use of BFS), Social Networks (through the abstraction
+ of the concept of the STC)
+
+Type: Implementation Project
+
+Credit: This was an individual project, so obviously all of it was me. **Let me note that a good chunk of
+ the functionality to do with Spotify account authorization was taken directly from the Spotify API
+ instructions and therefore is not my code.** Nevertheless, everything else (absolutely everything to do
+ with the application's main function) and many alterations to their authorization functionality was
+ written by me.
