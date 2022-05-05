@@ -6,6 +6,8 @@ import querystring from 'querystring';
 import cookieParser from 'cookie-parser';
 import fetch from 'node-fetch';
 
+const PORT = process.env.PORT || 8888; //for deployment
+
 // Get directory path
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -20,7 +22,12 @@ import { strictEqual } from 'assert';
 // Set important spotify api accoutn information
 let client_id = 'a3aa685edb1e44249fec2c5871c69c46'; // Your client id
 let client_secret = '7237be6e49bc4eb4bb10b70cdf9af5a9';
-let redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+let redirect_uri;
+if (PORT == 8888) {
+  redirect_uri = 'http://localhost:8888/callback';
+} else {
+  redirect_uri = 'https://the-reverse-nardwuar.herokuapp.com/callback' // change depending on deployed link!
+}
 let stateKey = 'spotify_auth_state';
 let access_token;
 let refresh_token;
@@ -379,7 +386,6 @@ app.get('/refresh_token', function(req, res) {
 /**
  * Starting the app
  */
-app.listen(8888, () => {
-  console.log('Listening on 8888');
-  console.log('Visit: http://localhost:8888/')
+app.listen(PORT, () => {
+  console.log('Listening on ' + PORT);
 });

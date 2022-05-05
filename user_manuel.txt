@@ -1,0 +1,24 @@
+In order to run the app you can either run it locally or view the deployed version at: https://the-reverse-nardwuar.herokuapp.com/
+
+To run it locally, download the file structure, ensure you have npm installed then run "npm install" followed by "npm start". The app will then be available at http://localhost:8888/
+
+In order to use the app you will have to login with a Spotify account. Unfortunately, with the free version of the Spotify API, I need to register any user's that can access the account. Luckily, I was able to make a Spotify account with my school email, I registered it with my app and I will give you the credentials:
+
+username: 06a0fampxjede1zey8zo2mnqj
+email: khtarnas@sas.upenn.edu
+password: nets150password
+
+If you would prefer to use your own Spotify account (the only difference is what name I dynamically render at the top of the page), email me the account username and email and I can add you asap!
+
+Once you've logged in, you will reach the home page. You can enter any artist names into the two artist name text boxes and any integer into the depth text box (feel free to leave these restrictions and see what kind of error messages you get -- all cases should be handled, if it crashes, message me asap and I can relaunch the deployed website immediately).
+
+Since this is effectively a Breath First Search (BFS) on a VERY large graph and for each node I have to do an individual query to Spotify, some operations take a long time. I would recommend not doing a depth of more than 3 if you are not willing to let it sit. For every depth, I prompt you with my time estimate so feel free to try things and then just let the website site.
+
+Also, since everything happens in one swoop, it is hard to tell that things are working sometimes, since no information can be returned to the frontend without ending the function. If I were to redo this, that is a main thing I would try to fix. Nevertheless, if you check the console in your browser and there are no errors then nothing is wrong and it is chugging its way along! *This is the benefit to running it locally, I have console.logs that allow you to watch its progress.*
+
+Here are some random things I stumbled on that may be useful to your testing:
+- Steve Aoki has 160 collaborators at depth 0 so he's an interesting one to play with.
+- My Chemical Romance has only collaborated with Steve Aoki (this then means at a depth of 1, they have 160 collaborators)
+- Bruno Major has never collaborated with anyone. This will be quick test.
+- All the super popular artists are obviously good ones. Bruno Mars has deep pockets (in terms of collaboration). He obviously is part of Silk Sonic, so that's another easy quick test. Also since he has collaborated with some very big artists, it may be pretty easy to connect him to other artists that he has not collaborated with (in a Kevin Bacon type of way).
+- Artists with non-english letters (like the occasional accented letter) should still work even though they error with a regular Spotify API request (I had to part them out before sending the query).
