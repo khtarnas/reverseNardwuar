@@ -41,10 +41,17 @@ Also, since everything happens in one swoop, it is hard to tell that things are 
  it is chugging its way along! *This is the benefit to running it locally, I have
  console.logs that allow you to watch its progress.*
 
-Here are some random things I stumbled on that may be useful to your testing:
+*Cool side feature: if two artists are not found to have a loosened STC at the given depth,
+the application will tell you how many artists were searched!*
+
+Here are some random things I stumbled on that may be useful/interesting in your testing:
 - Steve Aoki has 160 collaborators at depth 0 so he's an interesting one to play with.
 - My Chemical Romance has only collaborated with Steve Aoki (this then means at a depth of
- 1, they have 160 collaborators)
+ 1, they have 160 collaborators). Keep in mind because this is a Breadth first, it starts
+ from the first artist as the node and because this terminates once the given user is found
+ you will often notice runtime differences between which artist you put first (no accuracy
+ difference). Feel free to test this with My Chemical Romance and Steve Aoki (it is the biggest
+ difference I have found!).
 - Bruno Major has never collaborated with anyone. This will be quick test.
 - All the super popular artists are obviously good ones. Bruno Mars has deep pockets (in
  terms of collaboration). He obviously is part of Silk Sonic, so that's another easy quick

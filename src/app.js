@@ -172,6 +172,7 @@ app.get('/collaboratonGuess', async function(req, res) {
 
         // boolean representing whether artist2 was found among artist1's collaborators
         let found = false;
+        const searched = true; // to show that we did search! 
 
         // Check if artist2 has any collaborators at all
         if (tempCollaborators.length === 0) {
@@ -247,7 +248,7 @@ app.get('/collaboratonGuess', async function(req, res) {
         }
 
         // If artist2 wasn't found at any point, we'll say its a ~0% chance
-        if (!found) {
+        if (!found && searched) {
           res.send(JSON.stringify({
             message: 'Artist 1 was searched as "' + artist1name + '" and Artist 2 was searched as "' + artist2name + '".' +
               ' There were a total of ' + collaborators.length + ' at the final depth of ' + (depth + 1) + '.',
