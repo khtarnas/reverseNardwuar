@@ -1,5 +1,5 @@
 The Reverse Nardwuar app for guessing if two artists will collaborate.
-More information Info/summary.text and Info/user_manuel.txt.
+More information in Info/summary.text and Info/user_manuel.txt.
 
 The following is an explanation of the file structure of this project:
 - Info: a folder with information about the project
